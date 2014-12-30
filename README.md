@@ -142,7 +142,7 @@ I note a % beside each rule on how strictly my guide agrees with Papa's.
           'app.dashboard'
       ]);
   ```
-*Twist*: Our corporate accounts tend to namespace their C# code like:
+    *Twist*: Our corporate accounts tend to namespace their C# code like:
 
     ``` c#
     // pattern : using <corp>|<app>.<layer>.<feature>.<class>
