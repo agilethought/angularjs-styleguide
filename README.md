@@ -113,6 +113,18 @@ I note a % beside each rule on how strictly my guide agrees with Papa's.
 
   *Why?*: Unique names help avoid module name collisions. Separators help define modules and their submodule hierarchy. For example `app` may be your root module while `app.dashboard` and `app.users` may be modules that are used as dependencies of `app`. 
 
+  *Twist*: Our corporate accounts tend to namespace their C-sharp code like:
+
+    ``` c#
+    // pattern : using <corp>|<app>.<layer>.<feature>.<class>
+    // example
+        using myCorp.web.controller.users
+        // or
+        using userWeb.controller.users
+    ```
+
+  In Angular projects, we attempt to follow a similar pattern, using an actual app-name, rather than app.
+
 ### Definitions (aka Setters)
 ###### [Style [Y021](#style-y021)]
 
@@ -142,18 +154,6 @@ I note a % beside each rule on how strictly my guide agrees with Papa's.
           'app.dashboard'
       ]);
   ```
-    *Twist*: Our corporate accounts tend to namespace their C-sharp code like:
-
-    ``` c#
-    // pattern : using <corp>|<app>.<layer>.<feature>.<class>
-    // example
-        using myCorp.web.controller.users
-        // or
-        using userWeb.controller.users
-    ```
-
-  In Angular projects, we attempt to follow a similar pattern, using an actual app-name, rather than app.
-
 
 ### Getters (100%)
 ###### [Style [Y022](#style-y022)]
