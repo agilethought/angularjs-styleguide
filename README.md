@@ -1,23 +1,12 @@
-# AngularJS Style Guide
+# AngularJS Style Guide Extensions
 
-*Opinionated AngularJS style guide for teams by [@john_papa](//twitter.com/john_papa)*
+*Opinionated MVC AngularJS style extensions / modifications [@mbcoop](//twitter.com/mbcoop)*
 
-If you are looking for an opinionated style guide for syntax, conventions, and structuring AngularJS applications, then step right in. These styles are based on my development experience with [AngularJS](//angularjs.org), presentations, [Pluralsight training courses](http://pluralsight.com/training/Authors/Details/john-papa) and working in teams. 
+This is a commentary and extension of [John Papa's Angular Starter](https://github.com/johnpapa/angularjs-styleguide).
+It makes a few modifications based on our experience build Enterprise AngularJS apps in the past 2 years.
 
->If you like this guide, check out my [AngularJS Patterns: Clean Code](http://jpapa.me/ngclean) course at Pluralsight.
+I note a % beside each rule on how strictly my guide agrees with Papa's.
 
-The purpose of this style guide is to provide guidance on building AngularJS applications by showing the conventions I use and, more importantly, why I choose them. 
-
-## Community Awesomeness and Credit
-Never work in a vacuum. I find that the AngularJS community is an incredible group who are passionate about sharing experiences. As such, a friend  and  AngularJS expert Todd Motto and I have collaborated on many styles and conventions. We agree on most, and some we diverge. I encourage you to check out [Todd's  guidelines](https://github.com/toddmotto/angularjs-styleguide) to get a sense for his approach and how it compares.
-
-Many of my styles have been from the many pair programming sessions [Ward Bell](http://twitter.com/wardbell) and I have had. While we don't always agree, my friend Ward has certainly helped influence the ultimate evolution of this guide.
-
-## See the Styles in a Sample App
-While this guide explains the *what*, *why* and *how*, I find it helpful to see them in practice. This guide is accompanied by a sample application that follows these styles and patterns. You can find the [sample application (named modular) here](https://github.com/johnpapa/ng-demos) in the `modular` folder. Feel free to grab it, clone it, or fork it. [Instructions on running it are in its readme](https://github.com/johnpapa/ng-demos/tree/master/modular).
-
-##Translations 
-[Translations of this Angular style guide](https://github.com/johnpapa/angularjs-styleguide/tree/master/i18n) are maintained by the community and can be found here.
 
 ## Table of Contents
 
@@ -51,7 +40,7 @@ While this guide explains the *what*, *why* and *how*, I find it helpful to see 
 
 ## Single Responsibility
 
-### Rule of 1 
+### Rule of 1 (100%)
 ###### [Style [Y001](#style-y001)]
 
   - Define 1 component per file.  
@@ -105,74 +94,19 @@ While this guide explains the *what*, *why* and *how*, I find it helpful to see 
 **[Back to top](#table-of-contents)**
 
 ## IIFE
-### JavaScript Closures
+### JavaScript Closures (0%)
 ###### [Style [Y010](#style-y010)]
 
-  - Wrap AngularJS components in an Immediately Invoked Function Expression (IIFE). 
-  
-  *Why?*: An IIFE removes variables from the global scope. This helps prevent variables and function declarations from living longer than expected in the global scope, which also helps avoid variable collisions.
+  I feel this is **not needed** if you use the modern ng-annotation tools.
+  [See annotation] (#minification-and-annotation).
 
-  *Why?*: When your code is minified and bundled into a single file for deployment to a production server, you could have collisions of variables and many global variables. An IIFE protects you against both of these by providing variable scope for each file.
-
-  ```javascript
-  /* avoid */
-  // logger.js
-  angular
-      .module('app')
-      .factory('logger', logger);
-
-  // logger function is added as a global variable  
-  function logger() { }
-
-  // storage.js
-  angular
-      .module('app')
-      .factory('storage', storage);
-
-  // storage function is added as a global variable  
-  function storage() { }
-  ```
-
-  
-  ```javascript
-  /**
-   * recommended 
-   *
-   * no globals are left behind 
-   */
-
-  // logger.js
-  (function() {
-      'use strict';
-      
-      angular
-          .module('app')
-          .factory('logger', logger);
-
-      function logger() { }
-  })();
-
-  // storage.js
-  (function() {
-      'use strict';
-
-      angular
-          .module('app')
-          .factory('storage', storage);
-
-      function storage() { }
-  })();
-  ```
-
-  - Note: For brevity only, the rest of the examples in this guide may omit the IIFE syntax. 
-  
-  - Note: IIFE's prevent test code from reaching private members like regular expressions or helper functions which are often good to unit test directly on their own. However you can test these through accessible members or by exposing them through their own component. For example placing helper functions, regular expressions or constants in their own factory or constant.
+  With that and intelligent namespacing of your app, there is no need for the extra plumbing.
 
 **[Back to top](#table-of-contents)**
 
 ## Modules
 
-### Avoid Naming Collisions
+### Avoid Naming Collisions (90%)
 ###### [Style [Y020](#style-y020)]
 
   - Use unique naming conventions with separators for sub-modules. 
@@ -208,8 +142,20 @@ While this guide explains the *what*, *why* and *how*, I find it helpful to see 
           'app.dashboard'
       ]);
   ```
+*Twist*: Our corporate accounts tend to namespace their C# code like:
 
-### Getters
+    ``` c#
+    // pattern : using <corp>|<app>.<layer>.<feature>.<class>
+    // example
+        using myCorp.web.controller.users
+        // or
+        using userWeb.controller.users
+    ```
+
+  In Angular projects, we attempt to follow a similar pattern, using an actual app-name, rather than app.
+
+
+### Getters (100%)
 ###### [Style [Y022](#style-y022)]
 
   - When using a module, avoid using a variable and instead use   chaining with the getter syntax.
@@ -233,7 +179,7 @@ While this guide explains the *what*, *why* and *how*, I find it helpful to see 
   function SomeController() { }
   ```
 
-### Setting vs Getting
+### Setting vs Getting (100%)
 ###### [Style [Y023](#style-y023)]
 
   - Only set once and get for all other instances.
@@ -243,7 +189,7 @@ While this guide explains the *what*, *why* and *how*, I find it helpful to see 
 	  - Use `angular.module('app', []);` to set a module.
 	  - Use  `angular.module('app');` to get a module. 
 
-### Named vs Anonymous Functions
+### Named vs Anonymous Functions (100%)
 ###### [Style [Y024](#style-y024)]
 
   - Use named functions instead of passing an anonymous function in as a callback. 
