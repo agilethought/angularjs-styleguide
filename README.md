@@ -1,11 +1,11 @@
-# AngularJS Style Guide Extensions
+**# AngularJS Style Guide Extensions
 
 *Opinionated MVC AngularJS style extensions / modifications [@mbcoop](//twitter.com/mbcoop)*
 
 This is a commentary and extension of [John Papa's Angular Starter](https://github.com/johnpapa/angularjs-styleguide).
 It makes a few modifications based on our experience build Enterprise AngularJS apps in the past 2 years.
 
-I note a % beside each rule on how strictly my guide agrees with Papa's.
+*I note a % beside each rule on how strictly my guide agrees with Papa's.
 
 
 ## Table of Contents
@@ -331,7 +331,7 @@ I note a % beside each rule on how strictly my guide agrees with Papa's.
   }
   ```
 
-### Bindable Members Up Top
+### Bindable Members Up Top (80%)
 ###### [Style [Y033](#style-y033)]
 
   - Place bindable members at the top of the controller, alphabetized, and not spread through the controller code.
@@ -419,8 +419,10 @@ I note a % beside each rule on how strictly my guide agrees with Papa's.
       vm.sessions = [];
       vm.title = 'Sessions';
   ```
+*@mbcooper:* In general, we would want to bind to a known model, or view-model, rather than sprinkling the controller with new variables.  The items you want to keep in the controller should be state-related information, and DOM-only bindings, like search terms, etc.  Otherwise, push your logic and binding to [models](models). 
 
-### Function Declarations to Hide Implementation Details
+
+### Function Declarations to Hide Implementation Details (100%)
 ###### [Style [Y034](#style-y034)]
 
   - Use function declarations to hide implementation details. Keep your bindable members up top. When you need to bind a function in a controller, point it to a function declaration that appears later in the file. This is tied directly to the section Bindable Members Up Top. For more details see [this post](http://www.johnpapa.net/angular-function-declarations-function-expressions-and-readable-code).
@@ -495,14 +497,14 @@ I note a % beside each rule on how strictly my guide agrees with Papa's.
   }
   ```
 
-### Defer Controller Logic
+### Defer Controller Logic (90%)
 ###### [Style [Y035](#style-y035)]
 
-  - Defer logic in a controller by delegating to services and factories.
+  - Defer logic in a controller by delegating to services, models and factories.
 
     *Why?*: Logic may be reused by multiple controllers when placed within a service and exposed via a function.
 
-    *Why?*: Logic in a service can more easily be isolated in a unit test, while the calling logic in the controller can be easily mocked.
+    *Why?*: Logic in a service or model can more easily be isolated in a unit test, while the calling logic in the controller can be easily mocked.
 
     *Why?*: Removes dependencies and hides implementation details from the controller.
 
@@ -554,7 +556,7 @@ I note a % beside each rule on how strictly my guide agrees with Papa's.
   }
   ```
 
-### Keep Controllers Focused
+### Keep Controllers Focused (110%!)
 ###### [Style [Y037](#style-y037)]
 
   - Define a controller for a view, and try not to reuse the controller for other views. Instead, move reusable logic to factories and keep the controller simple and focused on its view. 
@@ -620,10 +622,10 @@ I note a % beside each rule on how strictly my guide agrees with Papa's.
 
 ## Services
 
-### Singletons
+### Singletons (50%)
 ###### [Style [Y040](#style-y040)]
 
-  - Services are instantiated with the `new` keyword, use `this` for public methods and variables. Since these are so similar to factories, use a factory instead for consistency. 
+  - Services are instantiated with the `new` keyword, use `this` for public methods and variables.  Alternatively, use the revealing module pattern. Use the `.service` module type. 
   
     Note: [All AngularJS services are singletons](https://docs.angularjs.org/guide/services). This means that there is only one instance of a given service per injector.
 
@@ -641,18 +643,19 @@ I note a % beside each rule on how strictly my guide agrees with Papa's.
   ```
 
   ```javascript
-  // factory
+  // service - revealing module pattern
   angular
       .module('app')
-      .factory('logger', logger);
+      .service('logger', logger);
 
-  function logger() {
-      return {
-          logError: function(msg) {
-            /* */
-          }
-     };
+  
+     var logError = function(msg) {
+      /* */
+   
   }
+	return {
+		logError: logError
+	}
   ```
 
 **[Back to top](#table-of-contents)**
