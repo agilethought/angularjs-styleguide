@@ -1,4 +1,5 @@
-**# AngularJS Style Guide Extensions
+AngularJS Style Guide Extensions
+--------------------------------
 
 *Opinionated MVC AngularJS style extensions / modifications [@mbcoop](//twitter.com/mbcoop)*
 
@@ -660,7 +661,7 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
 
 **[Back to top](#table-of-contents)**
 
-## Factories
+## Factories (90%)
 
 ### Single Responsibility
 ###### [Style [Y050](#style-y050)]
@@ -670,9 +671,9 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
 ### Singletons
 ###### [Style [Y051](#style-y051)]
 
-  - Factories are singletons and return an object that contains the members of the service.
+  - Factories are singletons and manufacture an object that contains the members of the model.
   
-    Note: [All AngularJS services are singletons](https://docs.angularjs.org/guide/services).
+  Note: the factory is a singleton, but we use it to create an object that we create with `new`.  See [models](models).
 
 ### Accessible Members Up Top
 ###### [Style [Y052](#style-y052)]
@@ -729,9 +730,8 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
 
   This way bindings are mirrored across the host object, primitive values cannot update alone using the revealing module pattern
 
-    ![Factories Using "Above the Fold"](https://raw.githubusercontent.com/johnpapa/angularjs-styleguide/master/assets/above-the-fold-2.png)
 
-### Function Declarations to Hide Implementation Details
+### Function Declarations to Hide Implementation Details (100%)
 ###### [Style [Y053](#style-y053)]
 
   - Use function declarations to hide implementation details. Keep your accessible members of the factory up top. Point those to function declarations that appears later in the file. For more details see [this post](http://www.johnpapa.net/angular-function-declarations-function-expressions-and-readable-code).
