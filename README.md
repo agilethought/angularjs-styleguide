@@ -18,6 +18,8 @@ I note a % beside each rule on how strictly my guide agrees with Papa's.
   1. [Factories](#factories)
   1. [Data Services](#data-services)
   1. [Directives](#directives)
+  1. [Models] (#models)
+  1. [Javascript Patterns by Type] (#functions)
   1. [Resolving Promises for a Controller](#resolving-promises-for-a-controller)
   1. [Manual Annotating for Dependency Injection](#manual-annotating-for-dependency-injection)
   1. [Minification and Annotation](#minification-and-annotation)
@@ -125,7 +127,7 @@ I note a % beside each rule on how strictly my guide agrees with Papa's.
 
   In Angular projects, we attempt to follow a similar pattern, using an actual app-name, rather than app.
 
-### Definitions (aka Setters)
+### Definitions (aka Setters) (100%)
 ###### [Style [Y021](#style-y021)]
 
   - Declare modules without a variable using the setter syntax. 
@@ -228,7 +230,7 @@ I note a % beside each rule on how strictly my guide agrees with Papa's.
 
 ## Controllers
 
-### controllerAs View Syntax
+### controllerAs View Syntax (100% ++)
 ###### [Style [Y030](#style-y030)]
 
   - Use the [`controllerAs`](http://www.johnpapa.net/do-you-like-your-angular-controllers-with-or-without-sugar/) syntax over the `classic controller with $scope` syntax. 
