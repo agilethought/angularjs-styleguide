@@ -833,10 +833,10 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
 
 ## Data Services
 
-### Separate Data Calls
+### Separate Data Calls (80%, includes Papa promise)
 ###### [Style [Y060](#style-y060)]
 
-  - Refactor logic for making data operations and interacting with data to a factory. Make data services responsible for XHR calls, local storage, stashing in memory, or any other data operations.
+ - Refactor logic for making data operations and interacting with data to a service. Make data services responsible for XHR calls, local storage, stashing in memory, or any other data operations.
 
     *Why?*: The controller's responsibility is for the presentation and gathering of information for the view. It should not care how it gets the data, just that it knows who to ask for it. Separating the data services moves the logic on how to get it to the data service, and lets the controller be simpler and more focused on the view.
 
@@ -844,15 +844,23 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
 
     *Why?*: Data service implementation may have very specific code to handle the data repository. This may include headers, how to talk to the data, or other services such as $http. Separating the logic into a data service encapsulates this logic in a single place hiding the implementation from the outside consumers (perhaps a controller), also making it easier to change the implementation.
 
+	 
+ - Wrap `$http` calls in `$q`.  Return the promise.
+ 
+	 *Why?* We get more fine-grained control over errors.  For example, we can return customized error objects, etc. if we capture success and failure.   By returning the promise, we ensure the calling controller will have the proper model on success, and can react to promise conditions with UI blockers, flags etc. to make the experience better for the user.
+
+ - Transform`responses in the success function
+ 
+	 *Why?*  Again, fine-grained control.  We ensure that the service returns a Model of the expected type, all prepped for us in our controller.
+
   ```javascript
   /* recommended */
 
   // dataservice factory
   angular
-      .module('app.core')
-      .factory('dataservice', dataservice);
-
-  dataservice.$inject = ['$http', 'logger'];
+      .module('app.core', 
+      ['$http', 'logger', '$q', 'AvengerModel'])
+      .service('dataservice', dataservice);
 
   function dataservice($http, logger) {
       return {
@@ -860,17 +868,22 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
       };
 
       function getAvengers() {
+	      var defer = $q.defer();
           return $http.get('/api/maa')
               .then(getAvengersComplete)
               .catch(getAvengersFailed);
 
           function getAvengersComplete(response) {
-              return response.data.results;
+	          var avengerModel = new AvengerModel(response); 
+              defer.resolve(avengerModel);
           }
 
           function getAvengersFailed(error) {
               logger.error('XHR Failed for getAvengers.' + error.data);
+              defer.reject();
           }
+		
+		return defer.promise();
       }
   }
   ```
@@ -909,55 +922,10 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
   }      
   ```
 
-### Return a Promise from Data Calls
-###### [Style [Y061](#style-y061)]
-
-  - When calling a data service that returns a promise such as $http, return a promise in your calling function too.
-
-    *Why?*: You can chain the promises together and take further action after the data call completes and resolves or rejects the promise.
-
-  ```javascript
-  /* recommended */
-
-  activate();
-
-  function activate() {
-      /**
-       * Step 1
-       * Ask the getAvengers function for the
-       * avenger data and wait for the promise
-       */
-      return getAvengers().then(function() {
-          /**
-           * Step 4
-           * Perform an action on resolve of final promise
-           */
-          logger.info('Activated Avengers View');
-      });
-  }
-
-  function getAvengers() {
-        /**
-         * Step 2
-         * Ask the data service for the data and wait
-         * for the promise
-         */
-        return dataservice.getAvengers()
-            .then(function(data) {
-                /**
-                 * Step 3
-                 * set the data and resolve the promise
-                 */
-                vm.avengers = data;
-                return vm.avengers;
-        });
-  }
-  ```
-
     **[Back to top](#table-of-contents)**
 
 ## Directives
-### Limit 1 Per File
+### Limit 1 Per File (100%)
 ###### [Style [Y070](#style-y070)]
 
   - Create one directive per file. Name the file for the directive. 
@@ -1049,14 +1017,14 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
 
     Note: There are many naming options for directives, especially since they can be used in narrow or wide scopes. Choose one that makes the directive and it's file name distinct and clear. Some examples are below, but see the naming section for more recommendations.
 
-### Manipulate DOM in a Directive
+### Manipulate DOM in a Directive (100%)
 ###### [Style [Y072](#style-y072)]
 
   - When manipulating the DOM directly, use a directive. If alternative ways can be used such as using CSS to set styles or the [animation services](https://docs.angularjs.org/api/ngAnimate), Angular templating, [`ngShow`](https://docs.angularjs.org/api/ng/directive/ngShow) or [`ngHide`](https://docs.angularjs.org/api/ng/directive/ngHide), then use those instead. For example, if the directive simply hides and shows, use ngHide/ngShow. 
 
     *Why?*: DOM manipulation can be difficult to test, debug, and there are often better ways (e.g. CSS, animations, templates)
 
-### Provide a Unique Directive Prefix
+### Provide a Unique Directive Prefix (100%)
 ###### [Style [Y073](#style-y073)]
 
   - Provide a short, unique and descriptive directive prefix such as `acmeSalesCustomerInfo` which is declared in HTML as `acme-sales-customer-info`.
@@ -1065,7 +1033,7 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
 
     Note: Avoid `ng-` as these are reserved for AngularJS directives.Research widely used directives to avoid naming conflicts, such as `ion-` for the [Ionic Framework](http://ionicframework.com/). 
 
-### Restrict to Elements and Attributes
+### Restrict to Elements and Attributes (100%)
 ###### [Style [Y074](#style-y074)]
 
   - When creating a directive that makes sense as a standalone element, allow restrict `E` (custom element) and optionally restrict `A` (custom attribute). Generally, if it could be its own control, `E` is appropriate. General guideline is allow `EA` but lean towards implementing as an element when its standalone and as an attribute when it enhances its existing DOM element.
@@ -1127,7 +1095,7 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
   }
   ```
 
-### Directives and ControllerAs
+### Directives and ControllerAs (100%)
 ###### [Style [Y075](#style-y075)]
 
   - Use `controller as` syntax with a directive to be consistent with using `controller as` with view and controller pairings.
@@ -1195,7 +1163,7 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
 
 ## Resolving Promises for a Controller
 
-### Controller Activation Promises
+### Controller Activation Promises (100%)
 ###### [Style [Y080](#style-y080)]
 
   - Resolve start-up logic for a controller in an `activate` function.
@@ -1240,12 +1208,15 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
   }
   ```
 
-### Route Resolve Promises
+### Route Resolve Promises (80%)
 ###### [Style [Y081](#style-y081)]
 
-  - When a controller depends on a promise to be resolved before the controller is activated, resolve those dependencies in the `$routeProvider` before the controller logic is executed. If you need to conditionally cancel a route before the controller is activated, use a route resolver.
+  - Use `ui.router` for state and location management.
+  *Why* it's the future. It allows us to navigate by state, rather than location, has nice DOM options that allow state-linking and view locations, and allows very flexible nested views and states.   Awesome.
+  
+  - When a controller depends on a promise to be resolved before the controller is activated, resolve those dependencies in the `$stateProvider` before the controller logic is executed. If you need to conditionally cancel a route before the controller is activated, use a route resolver. **TODO!**
 
-  - Use a route resolve when you want to decide to cancel the route before ever transitioning to the View.
+  - Use a route resolve when you want to decide to cancel the route before ever transitioning to the View. **TODO!**
 
     *Why?*: A controller may require data before it loads. That data may come from a promise via a custom factory or [$http](https://docs.angularjs.org/api/ng/service/$http). Using a [route resolve](https://docs.angularjs.org/api/ngRoute/provider/$routeProvider) allows the promise to resolve before the controller logic executes, so it might take action based on that data from the promise.
 
@@ -1278,15 +1249,18 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
       .module('app')
       .config(config);
 
-  function config($routeProvider) {
-      $routeProvider
-          .when('/avengers', {
-              templateUrl: 'avengers.html',
-              controller: 'Avengers',
-              controllerAs: 'vm',
-              resolve: {
-                  moviesPrepService: function(movieService) {
-                      return movieService.getMovies();
+  function config($stateProvider) {
+      $stateProvider
+          .state(
+	          'avengerState', 
+	          {
+		          url:  '/avengers',
+	              templateUrl: 'avengers.html',
+	              controller: 'Avengers',
+	              controllerAs: 'vm',
+	              resolve: {
+	                  moviesPrepService: function(movieService) {
+	                      return movieService.getMovies();
                   }
               }
           });
@@ -1314,14 +1288,17 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
       .module('app')
       .config(config);
 
-  function config($routeProvider) {
-      $routeProvider
-          .when('/avengers', {
-              templateUrl: 'avengers.html',
-              controller: 'Avengers',
-              controllerAs: 'vm',
-              resolve: {
-                  moviesPrepService: moviesPrepService
+  function config($stateProvider) {
+      $stateProvider
+          .state(
+	          'avengerState', 
+	          {
+		          url:  '/avengers',
+	              templateUrl: 'avengers.html',
+	              controller: 'Avengers',
+	              controllerAs: 'vm',
+	              resolve: {
+	                  moviesPrepService: moviesPrepService
               }
           });
   }
@@ -1345,9 +1322,9 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
 
 **[Back to top](#table-of-contents)**
 
-## Manual Annotating for Dependency Injection
+## Annotating for Dependency Injection (Simplified from Papa)
 
-### UnSafe from Minification
+### UnSafe from Minification (100%)
 ###### [Style [Y090](#style-y090)]
 
   - Avoid using the shortcut syntax of declaring dependencies without using a minification-safe approach.
@@ -1371,132 +1348,34 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
     angular.module('app').controller('Dashboard', d);function d(a, b) { }
     ```
 
-### Manually Identify Dependencies
-###### [Style [Y091](#style-y091)]
-
-  - Use `$inject` to manually identify your dependencies for AngularJS components.
+### Use ng-annotate (simplified)
+###### [Style [C091](#style-c091)]
   
-    *Why?*: This technique mirrors the technique used by [`ng-annotate`](https://github.com/olov/ng-annotate), which I recommend for automating the creation of minification safe dependencies. If `ng-annotate` detects injection has already been made, it will not duplicate it.
-
-    *Why?*: This safeguards your dependencies from being vulnerable to minification issues when parameters may be mangled. For example, `common` and `dataservice` may become `a` or `b` and not be found by AngularJS.
-
-    *Why?*: Avoid creating in-line dependencies as long lists can be difficult to read in the array. Also it can be confusing that the array is a series of strings while the last item is the component's function. 
-
-    ```javascript
-    /* avoid */
-    angular
-        .module('app')
-        .controller('Dashboard', 
-            ['$location', '$routeParams', 'common', 'dataservice', 
-                function Dashboard($location, $routeParams, common, dataservice) {}
-            ]);      
-    ```
-
-    ```javascript
-    /* avoid */
-    angular
-      .module('app')
-      .controller('Dashboard', 
-         ['$location', '$routeParams', 'common', 'dataservice', Dashboard]);
-      
-    function Dashboard($location, $routeParams, common, dataservice) {
-    }
-    ```
-
-    ```javascript
-    /* recommended */
-    angular
-        .module('app')
-        .controller('Dashboard', Dashboard);
-
-    Dashboard.$inject = ['$location', '$routeParams', 'common', 'dataservice'];
-      
-    function Dashboard($location, $routeParams, common, dataservice) {
-    }
-    ```
-
-    Note: When your function is below a return statement the $inject may be unreachable (this may happen in a directive). You can solve this by either moving the $inject above the return statement or by using the alternate array injection syntax. 
-
-    Note: [`ng-annotate 0.10.0`](https://github.com/olov/ng-annotate) introduced a feature where it moves the `$inject` to where it is reachable.
-
-    ```javascript
-    // inside a directive definition
-    function outer() {
-        return {
-            controller: DashboardPanel,
-        };
-
-        DashboardPanel.$inject = ['logger']; // Unreachable
-        function DashboardPanel(logger) {
-        }
-    }
-    ```
-
-    ```javascript
-    // inside a directive definition
-    function outer() {
-        DashboardPanel.$inject = ['logger']; // reachable
-        return {
-            controller: DashboardPanel,
-        };
-
-        function DashboardPanel(logger) {
-        }
-    }
-    ```
-
-### Manually Identify Route Resolver Dependencies
-###### [Style [Y092](#style-y092)]
-
-  - Use $inject to manually identify your route resolver dependencies for AngularJS components.
-  
-    *Why?*: This technique breaks out the anonymous function for the route resolver, making it easier to read.
-
-    *Why?*: An `$inject` statement can easily precede the resolver to handle making any dependencies minification safe.
-
-    ```javascript
-    /* recommended */
-    function config($routeProvider) {
-        $routeProvider
-            .when('/avengers', {
-                templateUrl: 'avengers.html',
-                controller: 'Avengers',
-                controllerAs: 'vm',
-                resolve: {
-                    moviesPrepService: moviePrepService
-                }
-            });
-    }
-
-    moviePrepService.$inject =  ['movieService'];
-    function moviePrepService(movieService) {
-        return movieService.getMovies();
-    }
-    ```
-
+  See [C100](#style-c100)
+ 
 **[Back to top](#table-of-contents)**
 
 ## Minification and Annotation
 
 ### ng-annotate
-###### [Style [Y100](#style-y100)]
+###### [Style [C100](#style-c100)]
 
-  - Use [ng-annotate](//github.com/olov/ng-annotate) for [Gulp](http://gulpjs.com) or [Grunt](http://gruntjs.com) and comment functions that need automated dependency injection using `/** @ngInject */`
+  - Use [ng-annotate](//github.com/olov/ng-annotate) for [Gulp](http://gulpjs.com) or [Grunt](http://gruntjs.com).  This stack is mature enough to alleviate the need to manually identify dependencies, beyond listing them in a module definition.
+  - 
+  - Comment functions that need automated dependency injection using `/** @ngInject */`where they are not picked up by ng-annotate.  In my experience, this has yet to be required.
   
     *Why?*: This safeguards your code from any dependencies that may not be using minification-safe practices.
 
-    *Why?*: [`ng-min`](https://github.com/btford/ngmin) is deprecated 
-
-    >I prefer Gulp as I feel it is easier to write, to read, and to debug.
+    >I too prefer Gulp as I feel it is easier to write, to read, and to debug.
 
     The following code is not using minification safe dependencies.
 
     ```javascript
+	// *** avoid
     angular
         .module('app')
         .controller('Avengers', Avengers);
 
-    /* @ngInject */
     function Avengers(storageService, avengerService) {
         var vm = this;
         vm.heroSearch = '';
@@ -1509,14 +1388,15 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
     }
     ```
 
-    When the above code is run through ng-annotate it will produce the following output with the `$inject` annotation and become minification-safe.
-
+    Instead, include the dependencies in the module definition, and ng-annotate will create the proper injections.
+    
     ```javascript
+    // *** use
     angular
-        .module('app')
+        .module('app', 
+        ['storageService', 'avengerService'])
         .controller('Avengers', Avengers);
 
-    /* @ngInject */
     function Avengers(storageService, avengerService) {
         var vm = this;
         vm.heroSearch = '';
@@ -1527,69 +1407,20 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
             storageService.save(hero.name, hero);
         }
     }
-
-    Avengers.$inject = ['storageService', 'avengerService'];
+	// ng-annotate will inject:
+	//    Avengers.$inject = ['storageService', 'avengerService'];
     ```
 
-    Note: If `ng-annotate` detects injection has already been made (e.g. `@ngInject` was detected), it will not duplicate the `$inject` code.
-
-    Note: When using a route resolver you can prefix the resolver's function with `/* @ngInject */` and it will produce properly annotated code, keeping any injected dependencies minification safe.
-
-    ```javascript
-    // Using @ngInject annotations
-    function config($routeProvider) {
-        $routeProvider
-            .when('/avengers', {
-                templateUrl: 'avengers.html',
-                controller: 'Avengers',
-                controllerAs: 'vm',
-                resolve: { /* @ngInject */
-                    moviesPrepService: function(movieService) {
-                        return movieService.getMovies();
-                    }
-                }
-            });
-    }
-    ```
-
-    > Note: Starting from AngularJS 1.3 use the [`ngApp`](https://docs.angularjs.org/api/ng/directive/ngApp) directive's `ngStrictDi` parameter. When present the injector will be created in "strict-di" mode causing the application to fail to invoke functions which do not use explicit function annotation (these may not be minification safe). Debugging info will be logged to the console to help track down the offending code.
+      > Note: Starting from AngularJS 1.3 use the [`ngApp`](https://docs.angularjs.org/api/ng/directive/ngApp) directive's `ngStrictDi` parameter. When present the injector will be created in "strict-di" mode causing the application to fail to invoke functions which do not use explicit function annotation (these may not be minification safe). Debugging info will be logged to the console to help track down the offending code.
     `<body ng-app="APP" ng-strict-di>`
-
-### Use Gulp or Grunt for ng-annotate
-###### [Style [Y101](#style-y101)]
-
-  - Use [gulp-ng-annotate](https://www.npmjs.org/package/gulp-ng-annotate) or [grunt-ng-annotate](https://www.npmjs.org/package/grunt-ng-annotate) in an automated build task. Inject `/* @ngInject */` prior to any function that has dependencies.
-  
-    *Why?*: ng-annotate will catch most dependencies, but it sometimes requires hints using the `/* @ngInject */` syntax.
-
-    The following code is an example of a gulp task using ngAnnotate
-
-    ```javascript
-    gulp.task('js', ['jshint'], function() {
-        var source = pkg.paths.js;
-        return gulp.src(source)
-            .pipe(sourcemaps.init())
-            .pipe(concat('all.min.js', {newLine: ';'}))
-            // Annotate before uglify so the code get's min'd properly.
-            .pipe(ngAnnotate({
-                // true helps add where @ngInject is not used. It infers.
-                // Doesn't work with resolve, so we must be explicit there
-                add: true
-            }))
-            .pipe(bytediff.start())
-            .pipe(uglify({mangle: true}))
-            .pipe(bytediff.stop())
-            .pipe(sourcemaps.write('./'))
-            .pipe(gulp.dest(pkg.paths.dev));
-    });
-
-    ```
+    
+    @mbcooper: However, I have found that some libraries do not pass this test (like Angular!), rendering it pretty useless!
 
 **[Back to top](#table-of-contents)**
 
 ## Exception Handling
 
-### decorators
+### decorators (100%)
 ###### [Style [Y110](#style-y110)]
 
   - Use a [decorator](https://docs.angularjs.org/api/auto/service/$provide#decorator), at config time using the [`$provide`](https://docs.angularjs.org/api/auto/service/$provide) service, on the [`$exceptionHandler`](https://docs.angularjs.org/api/ng/service/$exceptionHandler) service to perform custom actions when exceptions occur.
@@ -1630,7 +1461,7 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
     }
   	```
 
-### Exception Catchers
+### Exception Catchers (100%)
 ###### [Style [Y111](#style-y111)]
 
   - Create a factory that exposes an interface to catch and gracefully handle exceptions.
@@ -1642,10 +1473,8 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
     ```javascript
     /* recommended */
     angular
-        .module('blocks.exception')
+        .module('blocks.exception', ['$logger'])
         .factory('exception', exception);
-
-    exception.$inject = ['logger'];
 
     function exception(logger) {
         var service = {
@@ -1664,7 +1493,7 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
 ### Route Errors
 ###### [Style [Y112](#style-y112)]
 
-  - Handle and log all routing errors using [`$routeChangeError`](https://docs.angularjs.org/api/ngRoute/service/$route#$routeChangeError).
+  - Handle and log all routing errors using [`$stateChangeError `](https://github.com/angular-ui/ui-router/wiki#state-change-events).
 
     *Why?*: Provides a consistent way handle all routing errors.
 
@@ -1678,15 +1507,14 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
          * On routing error, go to the dashboard.
          * Provide an exit clause if it tries to do it twice.
          */
-        $rootScope.$on('$routeChangeError',
-            function(event, current, previous, rejection) {
-                var destination = (current && (current.title || current.name || current.loadedTemplateUrl)) ||
+        $rootScope.$on('$stateChangeError',
+            function(event, toState, toParams, fromState, fromParams, error) {
+                var destination = (toState&& (toState.title || toState.name || toState. url)) ||
                     'unknown target';
-                var msg = 'Error routing to ' + destination + '. ' + (rejection.msg || '');
+                var msg = 'Error routing to ' + destination + '. ' + (error.msg || '');
                 /**
                  * Optionally log using a custom service or $log.
-                 * (Don't forget to inject custom service)
-                 */
+                  */
                 logger.warning(msg, [current]);
             }
         );
@@ -1697,10 +1525,10 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
 
 ## Naming
 
-### Naming Guidelines
+### Naming Guidelines (90% - added app)
 ###### [Style [Y120](#style-y120)]
 
-  - Use consistent names for all components following a pattern that describes the component's feature then (optionally) its type. My recommended pattern is `feature.type.js`. There are 2 names for most assets:
+  - Use consistent names for all components following a pattern that describes the component's feature then (optionally) its type. Our recommended pattern is `feature.type.js`. There are 2 names for most assets:
     *   the file name (`avengers.controller.js`)
     *   the registered component name with Angular (`AvengersController`)
  
@@ -1708,39 +1536,25 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
 
     *Why?*: The naming conventions should simply help you find your code faster and make it easier to understand. 
 
-### Feature File Names
+>We prepend the module names with the application mnemonic.  If our app was 'game', our namespace pattern would be  `game.feature.type.js`
+
+### Feature File Names (simplified)
 ###### [Style [Y121](#style-y121)]
 
-  - Use consistent names for all components following a pattern that describes the component's feature then (optionally) its type. My recommended pattern is `feature.type.js`.
+  - Use consistent names for all components following a pattern that describes the component's feature then (optionally) its type. My recommended pattern is `app.feature.type.js`.
 
     *Why?*: Provides a consistent way to quickly identify components.
 
     *Why?*: Provides pattern matching for any automated tasks.
 
-    ```javascript
-    /**
-     * common options 
-     */
-
-    // Controllers
-    avengers.js
-    avengers.controller.js
-    avengersController.js
-
-    // Services/Factories
-    logger.js
-    logger.service.js
-    loggerService.js
-    ```
-
-    ```javascript
+       ```javascript
     /**
      * recommended
      */
 
-    // controllers
-    avengers.controller.js
-    avengers.controller.spec.js
+      // controllers
+     avengers.js
+     avengersController.js
 
     // services/factories
     logger.service.js
@@ -1764,21 +1578,12 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
     avenger-profile.directive.spec.js
     ```
 
-  Note: Another common convention is naming controller files without the word `controller` in the file name such as `avengers.js` instead of `avengers.controller.js`. All other conventions still hold using a suffix of the type. Controllers are the most common type of component so this just saves typing and is still easily identifiable. I recommend you choose 1 convention and be consistent for your team.
+  Note: We prefer the common convention of naming controller files without the word `controller` in the file name such as `avengers.js` instead of `avengers.controller.js`. All other conventions still hold using a suffix of the type. Controllers are the most common type of component so this just saves typing and is still easily identifiable. 
 
-    ```javascript
-    /**
-     * recommended
-     */
-    // Controllers
-    avengers.js
-    avengers.spec.js
-    ```
-
-### Test File Names
+### Test File Names (100%)
 ###### [Style [Y122](#style-y122)]
 
-  - Name test specifications similar to the component they test with a suffix of `spec`.  
+  - Name test specifications similar to the component they test with a suffix of `spec`.    Place them in the same folder as the target.
 
     *Why?*: Provides a consistent way to quickly identify components.
 
@@ -1794,7 +1599,7 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
     avenger-profile.directive.spec.js
     ```
 
-### Controller Names
+### Controller Names (100%)
 ###### [Style [Y123](#style-y123)]
 
   - Use consistent names for all controllers named after their feature. Use UpperCamelCase for controllers, as they are constructors.
@@ -1816,42 +1621,7 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
     function HeroAvengers(){ }
     ```
     
-### Controller Name Suffix
-###### [Style [Y124](#style-y124)]
-
-  - Append the controller name with the suffix `Controller` or with no suffix. Choose 1, not both.
-
-    *Why?*: The `Controller` suffix is more commonly used and is more explicitly descriptive.
-
-    *Why?*: Omitting the suffix is more succinct and the controller is often easily identifiable even without the suffix.
-
-    ```javascript
-    /**
-     * recommended: Option 1
-     */
-
-    // avengers.controller.js
-    angular
-        .module
-        .controller('Avengers', Avengers);
-
-    function Avengers(){ }
-    ```
-
-    ```javascript
-    /**
-     * recommended: Option 2
-     */
-
-    // avengers.controller.js
-    angular
-        .module
-        .controller('AvengersController', AvengersController);
-
-    function AvengersController(){ }
-    ```
-
-### Factory Names
+### Service Names (100%)
 ###### [Style [Y125](#style-y125)]
 
   - Use consistent names for all factories named after their feature. Use camel-casing for services and factories.
@@ -1870,8 +1640,19 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
 
     function logger(){ }
     ```
+### Model Names 
+###### [Style [C125](#style-c-125)]
 
-### Directive Component Names
+ - Use UpperCased model names for Model factories, as they are constructors.
+
+    ```javascript
+    angular.module('game.models.robot', [])
+    	.factory('Robot', Robot);
+	```
+
+See [Models](models).
+
+### Directive Component Names (100%)
 ###### [Style [Y126](#style-y126)]
 
   - Use consistent names for all directives using camel-case. Use a short prefix to describe the area that the directives belong (some example are company prefix or project prefix).
@@ -1893,7 +1674,7 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
     function xxAvengerProfile(){ }
     ```
 
-### Modules
+### Modules (100%)
 ###### [Style [Y127](#style-y127)]
 
   -  When there are multiple modules, the main module file is named `app.module.js` while other dependent modules are named after what they represent. For example, an admin module is named `admin.module.js`. The respective registered module names would be `app` and `admin`. 
@@ -1902,7 +1683,7 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
 
     *Why?*: Provides easy way to use task automation to load all module definitions first, then all other angular files (for bundling).
 
-### Configuration
+### Configuration (100%)
 ###### [Style [Y128](#style-y128)]
 
   - Separate configuration for a module into its own file named after the module. A configuration file for the main `app` module is named `app.config.js` (or simply `config.js`). A configuration for a module named `admin.module.js` is named `admin.config.js`.
@@ -1911,14 +1692,14 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
 
     *Why?*: Provides a identifiable place to set configuration for a module.
 
-### Routes
-###### [Style [Y129](#style-y129)]
+### Routes  (0%)
+###### [Style [C129](#style-c129)]
 
-  - Separate route configuration into its own file. Examples might be `app.route.js` for the main module and `admin.route.js` for the `admin` module. Even in smaller apps I prefer this separation from the rest of the configuration. 
+  - While Papa prefers routing in its own module, I find having the config in each controller makes more sense.   
 
 **[Back to top](#table-of-contents)**
 
-## Application Structure LIFT Principle
+## Application Structure LIFT Principle (100%)
 ### LIFT
 ###### [Style [Y140](#style-y140)]
 
@@ -1951,6 +1732,7 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
         /core
         /dashboard
         /data
+        /models
         /layout
         /widgets
       /content
@@ -1981,7 +1763,7 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
 
 **[Back to top](#table-of-contents)**
 
-## Application Structure
+## Application Structure (100%)
 
 ### Overall Guidelines
 ###### [Style [Y150](#style-y150)]
@@ -2093,7 +1875,7 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
 
 **[Back to top](#table-of-contents)**
 
-## Modularity
+## Modularity (100%)
   
 ### Many Small, Self Contained Modules
 ###### [Style [Y160](#style-y160)]
@@ -2117,6 +1899,8 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
     *Why?*: Adding additional roles to the application root to get remote data, display views, or other logic not related to pulling the app together muddies the app module and make both sets of features harder to reuse or turn off.
 
     *Why?*: The app module becomes a manifest that describes which modules help define the application. 
+
+>We often make the app controller an `abstract` state (using `ui-router`).  This allows us to ensure data dependencies on an app-wide basis are loaded.
 
 ### Feature Areas are Modules
 ###### [Style [Y163](#style-y163)]
