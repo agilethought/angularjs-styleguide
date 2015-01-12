@@ -1184,7 +1184,7 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
 	// sample factory for Animals model in our Zoo app
 	// tagging as Class will help intellisense in IntelliJ / Webstorm
 	/**
-	* @class Anumal
+	* @class Animal
 	* /
 	angular.module('zoo', [])
 		.factory('Animal', function(){
