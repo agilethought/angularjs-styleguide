@@ -19,8 +19,8 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
   1. [Factories](#factories)
   1. [Data Services](#data-services)
   1. [Directives](#directives)
-  1. [Models] (#models)
-  1. [Javascript Patterns by Type] (#functions)
+  1. [Models](#models)
+  1. [JavaScript Patterns by Type](#patterns)
   1. [Resolving Promises for a Controller](#resolving-promises-for-a-controller)
   1. [Manual Annotating for Dependency Injection](#manual-annotating-for-dependency-injection)
   1. [Minification and Annotation](#minification-and-annotation)
@@ -924,6 +924,7 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
 
     **[Back to top](#table-of-contents)**
 
+
 ## Directives
 ### Limit 1 Per File (100%)
 ###### [Style [Y070](#style-y070)]
@@ -1160,6 +1161,67 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
   ```
 
 **[Back to top](#table-of-contents)**
+
+
+## Models
+### Use Factories to Create View Model Versions of Domain Objects
+###### [Style [C500](#style-c500)]
+
+  - Create a factory to generate instances of domain model objects for use in the UI.  Create to/from DTO methods (if applicable) to translate from / to the server versions.
+
+	*Why?* Creating named instances of our view models (as opposed to accepting un-named objects from services) makes it easier to debug, and separates persistence logic (services) from core UI-domain logic.
+
+  - Use the revealing prototype pattern for models.  Place all properties in the constructor (except those defined in Object.define .. ).  Place all method in prototype extensions.
+
+	 *Why?* For objects that may have many instances, this is the most memory efficient, and cleanly separates methods and properties.
+
+  - Place all model-related logic in that factory.  Reduce logic in services and controllers on favor of models and view models.
+
+   *Why?*  Allows us the focus the controllers on UI and services on persistence.  A SOLID practice.
+
+  ```javascript
+
+	// sample factory for Animals model in our Zoo app
+	// tagging as Class will help intellisense in IntelliJ / Webstorm
+	/**
+	* @class Anumal
+	* /
+	angular.module('zoo', [])
+		.factory('Animal', function(){
+
+			var Animal = function(){
+				this.name = '';
+				this.topSpeed = 0; // mph
+				this.weight = 0;
+				this.color = '';
+			};
+
+		/**
+		* @method distanceCovered - returns miles covered in
+		* @param {number} time - minutes
+		* @return {number} miles covered
+		Animal.prototype.distanceCovered = function(time){
+				var vm = this;
+				return (time * vm.topSpeed) / 60;
+		};
+
+		return Animal;
+	});
+ ```
+
+##Patterns
+### Preferred JavaScript Patterns
+ 
+  - Follow theses JavaScript patterns for each of these types of modules.
+
+  *Why?* It encourages common practices, and these patterns are easier to test.   
+
+ |Module Type|Purpose|Typical Instance|JavaScript Pattern|
+ | ------------- | ------------- |---------------|------------|
+ |Controllers|View Controller|Singleton|[Module Pattern](http://addyosmani.com/resources/essentialjsdesignpatterns/book/#modulepatternjavascript)|
+ |Controllers|Directive Controller|Singleton|Module Pattern|
+ |Factory|Models, View Models|Multiple Instances|[Revealing Prototype Pattern](http://blog.pluralsight.com/revealing-prototype-pattern-structuring-javascript-code-part-iv)|
+ |Services|Persistence Management|Singleton|[Revealing Module Pattern](http://addyosmani.com/resources/essentialjsdesignpatterns/book/#revealingmodulepatternjavascript)|
 
 ## Resolving Promises for a Controller
 
@@ -1941,7 +2003,7 @@ See [Models](models).
 
 **[Back to top](#table-of-contents)**
 
-## Startup Logic
+## Startup Logic (100%)
 
 ### Configuration
 ###### [Style [Y170](#style-y170)]
@@ -1997,7 +2059,7 @@ See [Models](models).
 
 **[Back to top](#table-of-contents)**
 
-## Angular $ Wrapper Services
+## Angular $ Wrapper Services (100%)
 
 ### $document and $window
 ###### [Style [Y180](#style-y180)]
@@ -2015,7 +2077,7 @@ See [Models](models).
 
 **[Back to top](#table-of-contents)**
 
-## Testing
+## Testing (100%)
 Unit testing helps maintain clean code, as such I included some of my recommendations for unit testing foundations with links for more information.
 
 ### Write Tests with Stories
@@ -2045,12 +2107,12 @@ Unit testing helps maintain clean code, as such I included some of my recommenda
     // and so on
     ```
 
-### Testing Library
+### Testing Library (narrowed)
 ###### [Style [Y191](#style-y191)]
 
-  - Use [Jasmine](http://jasmine.github.io/) or [Mocha](http://visionmedia.github.io/mocha/) for unit testing.
+  - Use [Jasmine](http://jasmine.github.io/) for unit testing.
 
-    *Why?*: Both Jasmine and Mocha are widely used in the AngularJS community. Both are stable, well maintained, and provide robust testing features.
+    *Why?*: Jasmine is widely used in the AngularJS community. It is  stable, well maintained, and provides robust testing features.
 
     Note: When using Mocha, also consider choosing an assert library such as [Chai](http://chaijs.com).
 
@@ -2067,14 +2129,6 @@ Unit testing helps maintain clean code, as such I included some of my recommenda
 
     *Why?*: Karma works well with task automation leaders such as [Grunt](http://www.gruntjs.com) (with [grunt-karma](https://github.com/karma-runner/grunt-karma)) and [Gulp](http://www.gulpjs.com) (with [gulp-karma](https://github.com/lazd/gulp-karma)).
 
-### Stubbing and Spying
-###### [Style [Y193](#style-y193)]
-
-  - Use [Sinon](http://sinonjs.org/) for stubbing and spying.
-
-    *Why?*: Sinon works well with both Jasmine and Mocha and extends the stubbing and spying features they offer.
-
-    *Why?*: Sinon makes it easier to toggle between Jasmine and Mocha, if you want to try both.
 
 ### Headless Browser
 ###### [Style [Y194](#style-y194)]
@@ -2084,6 +2138,22 @@ Unit testing helps maintain clean code, as such I included some of my recommenda
     *Why?*: PhantomJS is a headless browser that helps run your tests without needing a "visual" browser. So you do not have to install Chrome, Safari, IE, or other browsers on your server. 
 
     Note: You should still test on all browsers in your environment, as appropriate for your target audience.
+
+### Code Coverage
+###### [Style [C195](#style-c195)]
+
+- Use Karma Coverage to analyze test coverage.
+	
+	*Why?* You'll find most of your errors where the code is not tested.
+
+- Write additional tests when killing bugs.  Whenever you are debugging and find a bug, if possible, write an additional test that covers the bug.
+
+### Protractor Tests
+###### [Style [C200](#style-c200)]
+
+ - Where possible, write basic protractor tests to verify the UI functionality.
+
+ *Why?* Automated tests ensure higher quality,  Unit tests can't catch functional interactions.
 
 ### Code Analysis
 ###### [Style [Y195](#style-y195)]
@@ -2107,7 +2177,7 @@ Unit testing helps maintain clean code, as such I included some of my recommenda
 
 **[Back to top](#table-of-contents)**
 
-## Animations
+## Animations (100%)
 
 ### Usage
 ###### [Style [Y210](#style-y210)]
@@ -2140,7 +2210,7 @@ Unit testing helps maintain clean code, as such I included some of my recommenda
 
 **[Back to top](#table-of-contents)**
 
-## Comments
+## Comments (100%)
 
 ### jsDoc
 ###### [Style [Y220](#style-y220)]
@@ -2192,7 +2262,7 @@ Unit testing helps maintain clean code, as such I included some of my recommenda
 
 **[Back to top](#table-of-contents)**
 
-## JS Hint
+## JS Hint (100%)
 
 ### Use an Options File
 ###### [Style [Y230](#style-y230)]
@@ -2269,7 +2339,7 @@ Unit testing helps maintain clean code, as such I included some of my recommenda
 
 **[Back to top](#table-of-contents)**
 
-## Constants
+## Constants (100%)
 
 ### Vendor Globals
 ###### [Style [Y240](#style-y240)]
