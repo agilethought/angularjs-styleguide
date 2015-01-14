@@ -1262,7 +1262,6 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
 				var vm = this;
 				return (time * vm.topSpeed) / 60;
 		};
-
 		return Animal;
 	});
  ```
