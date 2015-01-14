@@ -106,6 +106,10 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
 
   *Why?*: When your code is minified and bundled into a single file for deployment to a production server, you could have collisions of variables and many global variables. An IIFE protects you against both of these by providing variable scope for each file.
 
+  - Automate IIFE using grunt or gulp.
+
+  *Why?*: Productivity.  This ensures we always do it, and allows tests to poke inside of modules if desired.
+
   ```javascript
   /* avoid */
   // logger.js
