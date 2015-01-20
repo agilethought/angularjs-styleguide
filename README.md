@@ -35,7 +35,6 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
   1. [Animations](#animations) 
   1. [Comments](#comments)
   1. [JSHint](#js-hint)
-  1. [Constants](#constants)
   1. [File Templates and Snippets](#file-templates-and-snippets)
   1. [AngularJS Docs](#angularjs-docs)
   1. [Contributing](#contributing)
@@ -159,7 +158,7 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
   })();
   ```
 
-  - Note: For brevity only, the rest of the examples in this guide may omit the IIFE syntax. 
+  - Note: For brevity only, the rest of the examples in this guide may omit the IIFE syntax. (And we automate the task anyway).
 
   - Note: IIFE's prevent test code from reaching private members like regular expressions or helper functions which are often good to unit test directly on their own. However you can test these through accessible members or by exposing them through their own component. For example placing helper functions, regular expressions or constants in their own factory or constant.
 
@@ -1530,10 +1529,15 @@ It makes a few modifications based on our experience build Enterprise AngularJS 
 	//    Avengers.$inject = ['storageService', 'avengerService'];
     ```
 
-      > Note: Starting from AngularJS 1.3 use the [`ngApp`](https://docs.angularjs.org/api/ng/directive/ngApp) directive's `ngStrictDi` parameter. When present the injector will be created in "strict-di" mode causing the application to fail to invoke functions which do not use explicit function annotation (these may not be minification safe). Debugging info will be logged to the console to help track down the offending code.
-    `<body ng-app="APP" ng-strict-di>`
-    
-    @mbcooper: However, I have found that some libraries do not pass this test (like Angular!), rendering it pretty useless!
+  - Wrap all modules (using gulp-warp or grunt-wrap) with:
+```javascript
+	(function(){
+	 'use strict';
+	 // <%= contents %> go here
+	 })();
+```
+	
+  *Note*: Only wrap your own code, as messing with libraries can have un-expected results. 
 
 **[Back to top](#table-of-contents)**
 
@@ -1814,7 +1818,7 @@ See [Models](models).
 ### Routes  (0%)
 ###### [Style [C129](#style-c129)]
 
-  - While Papa prefers routing in its own module, I find having the config in each controller makes more sense.   
+  - While Papa prefers routing in its own module, we find having the config in each controller makes more sense.   
 
 **[Back to top](#table-of-contents)**
 
@@ -2171,7 +2175,6 @@ Unit testing helps maintain clean code, as such I included some of my recommenda
 
     *Why?*: Jasmine is widely used in the AngularJS community. It is  stable, well maintained, and provides robust testing features.
 
-    Note: When using Mocha, also consider choosing an assert library such as [Chai](http://chaijs.com).
 
 ### Test Runner
 ###### [Style [Y192](#style-y192)]
@@ -2272,7 +2275,7 @@ Unit testing helps maintain clean code, as such I included some of my recommenda
 ### jsDoc
 ###### [Style [Y220](#style-y220)]
 
-  - If planning to produce documentation, use [`jsDoc`](http://usejsdoc.org/) syntax to document function names, description, params and returns. Use `@namespace` and `@memberOf` to match your app structure.
+  - Use [`jsDoc`](http://usejsdoc.org/) syntax to document function names, description, params and returns. Use `@namespace` and `@memberOf` to match your app structure.  Use `@class, @property and @method` for factory models.  Use `@param` for all public function args (your can leave out injections).  ***Always include*** the type of the param for all public functions.
 
     *Why?*: You can generate (and regenerate) documentation from your code, instead of writing it from scratch.
 
@@ -2396,33 +2399,16 @@ Unit testing helps maintain clean code, as such I included some of my recommenda
 
 **[Back to top](#table-of-contents)**
 
-## Constants (100%)
-
-### Vendor Globals
-###### [Style [Y240](#style-y240)]
-
-  - Create an AngularJS Constant for vendor libraries' global variables.
-
-    *Why?*: Provides a way to inject vendor libraries that otherwise are globals. This improves code testability by allowing you to more easily know what the dependencies of your components are (avoids leaky abstractions). It also allows you to mock these dependencies, where it makes sense.
-
-    ```javascript
-    // constants.js
-
-    /* global toastr:false, moment:false */
-    (function() {
-        'use strict';
-
-        angular
-            .module('app.core')
-            .constant('toastr', toastr)
-            .constant('moment', moment);
-    })();
-    ```
-
-**[Back to top](#table-of-contents)**
 
 ## File Templates and Snippets
 Use file templates or snippets to help follow consistent styles and patterns. Here are templates and/or snippets for some of the web development editors and IDEs.
+
+###JSCS
+######[Style [C250](#style-c-250)]
+  - JSCS is integrated into IntelliJ and WebStorm to provide continuous style checking against the Google code syntax.
+  - Include `gulp-jscs` or `grunt-jscs` in the build process to catch unnoticed stylistic issues.
+
+ *Why?*  Ensures on-going adherence to these standards.
 
 ### Sublime Text
 ###### [Style [Y250](#style-y250)]
@@ -2490,6 +2476,7 @@ _tldr; Use this guide. Attributions are appreciated._
 ### (The MIT License)
 
 Copyright (c) 2014 [John Papa](http://johnpapa.net)
+portions Copyright (c) 2015 [AgileThought](http://www.agilethought.com)
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
