@@ -1,7 +1,7 @@
 AngularJS Style Guide Extensions
 --------------------------------
 
-*Opinionated MVC AngularJS style extensions / modifications [@mbcoop](//twitter.com/mbcoop)*
+*Opinionated MVC AngularJS style extensions / modifications @mbcooper*
 
 This is a commentary and extension of [John Papa's Angular Starter](https://github.com/johnpapa/angularjs-styleguide).
 It makes a few modifications based on our experience build Enterprise AngularJS apps in the past 2 years.
